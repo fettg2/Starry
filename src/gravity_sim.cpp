@@ -23,6 +23,9 @@
 
 #include "Scene.h"
 #include "Octree.h"
+#include "GameMode.h"
+
+//游戏模式代码：26，364，446，513，520，678
 
 //顶点着色器
 const char* vertexShaderSource = R"glsl(
@@ -357,12 +360,15 @@ int main(int argc, char** argv) {
         shipVel = objs[0].velocity;
     }
     
+    // 初始化游戏模式
+    gGameMode.init();
+    
     // 初始化八叉树
     glm::vec3 minBound = glm::vec3(-20000, -20000, -20000);
     glm::vec3 maxBound = glm::vec3(20000, 20000, 20000);
     octree = new Octree(minBound, maxBound);
     
-    std::vector<float> gridVertices = CreateGridVertices(40000.0f, 50, objs);//网格大小
+    std::vector<float> gridVertices = CreateGridVertices(40000.0f, 100, objs);//网格大小
     CreateVBOVAO(gridVAO, gridVBO, gridVertices.data(), gridVertices.size());
     
     // 主循环
@@ -437,6 +443,11 @@ int main(int argc, char** argv) {
 
         // 飞船模式物理与控制
         if (spaceshipMode) {
+            // 启动游戏模式
+            if (!gGameMode.isActive()) {
+                gGameMode.start();
+            }
+            
             // 1. 引擎推进器
             float thrust = 200.0f * deltaTime;
             if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) shipVel += gCamera.front() * thrust;
@@ -453,7 +464,7 @@ int main(int argc, char** argv) {
             }
 
             // 限制最大速度
-            float currentMaxSpeed = 8000.0f; 
+            float currentMaxSpeed = 6000.0f; 
             if (glm::length(shipVel) > currentMaxSpeed) {
                 shipVel = glm::normalize(shipVel) * currentMaxSpeed;
             }
@@ -499,9 +510,15 @@ int main(int argc, char** argv) {
                             float restitution = 0.3f; // 飞船的反弹系数 (0~1)
                             shipVel += normal * -(1.0f + restitution) * velAlongNormal;
                         }
+                        
+                        // 处理游戏模式碰撞事件
+                        gGameMode.handleCollision(obj);
                     }
                 }
             }
+            
+            // 更新游戏模式
+            gGameMode.update(deltaTime, objs, shipPos, shipVel);
             
             // 锁定第一人称视角到飞船
             gCamera.cameraPos = shipPos;
@@ -574,9 +591,44 @@ int main(int argc, char** argv) {
             }
 
             // 更新位置
-            if(!pause){
-                obj.UpdatePos();
-            }
+                if(!pause){
+                    obj.UpdatePos();
+                    // 添加三维边界约束
+                    // 以 objs[0] (中心天体) 的坐标为基准，XY 范围在[-20000, +20000]，Z 范围在[-10000, +10000]
+                    if (!objs.empty() && &obj != &objs[0] && !obj.Initalizing) {
+                        float relativeZ = obj.position.z - objs[0].position.z;
+                        float relativeX = obj.position.x - objs[0].position.x;
+                        float relativeY = obj.position.y - objs[0].position.y;
+                        
+                        // X 轴边界约束
+                        if (relativeX >= 20000.0f) {
+                            obj.position.x = objs[0].position.x + 20000.0f;
+                            obj.velocity = glm::vec3(0.0f, 0.0f, 0.0f);
+                        } else if (relativeX <= -20000.0f) {
+                            obj.position.x = objs[0].position.x - 20000.0f;
+                            obj.velocity = glm::vec3(0.0f, 0.0f, 0.0f);
+                        }
+                        
+                        // Y 轴边界约束
+                        if (relativeY >= 20000.0f) {
+                            obj.position.y = objs[0].position.y + 20000.0f;
+                            obj.velocity = glm::vec3(0.0f, 0.0f, 0.0f);
+                        } else if (relativeY <= -20000.0f) {
+                            obj.position.y = objs[0].position.y - 20000.0f;
+                            obj.velocity = glm::vec3(0.0f, 0.0f, 0.0f);
+                        }
+                        
+                        // Z 轴边界约束
+                        if (relativeZ >= 10000.0f) {
+                            obj.position.z = objs[0].position.z + 10000.0f;
+                            obj.velocity = glm::vec3(0.0f, 0.0f, 0.0f);
+                        } else if (relativeZ <= -10000.0f) {
+                            obj.position.z = objs[0].position.z - 10000.0f;
+                            obj.velocity = glm::vec3(0.0f, 0.0f, 0.0f);
+                        }
+
+                    }    
+                }
             
             glm::mat4 model = glm::mat4(1.0f);//创建单位矩阵
             model = glm::translate(model, obj.position); //传矩阵至当前位置
@@ -657,6 +709,9 @@ int main(int argc, char** argv) {
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
 
+        // 渲染游戏模式HUD
+        gGameMode.renderHUD();
+        
         ImGui::Render();
         // ImGui 始终在场景之后绘制，相当于一层最终叠加的 HUD。
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -1074,6 +1129,11 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
         if (spaceshipMode) {
             // 切入飞船时，将飞船传送到当前相机位置
             std::cout << "Spaceship Mode: ON" << std::endl;
+            // 开始天体运行
+            if (pause) {
+                pause = false;
+                std::cout << "Simulation resumed" << std::endl;
+            }
         } else {
             std::cout << "Spaceship Mode: OFF" << std::endl;
         }
@@ -1184,7 +1244,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods){
     if (button == GLFW_MOUSE_BUTTON_RIGHT){
         if (action == GLFW_PRESS){
-            objs.emplace_back(glm::vec3(500.0, 0.0, 0.0), glm::vec3(0.0f, 0.0f, 0.0f), initMass);
+            objs.emplace_back(glm::vec3(800.0, 0.0, 0.0), glm::vec3(0.0f, 0.0f, 500.0f), initMass, 3344, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), true);
             // 只有当objs不为空时才访问最后一个元素
             if (!objs.empty()) {
                 objs[objs.size()-1].Initalizing = true;
@@ -1231,6 +1291,7 @@ void DrawGrid(GLuint shaderProgram, GLuint gridVAO, size_t vertexCount) {
 
     glBindVertexArray(gridVAO);
     glPointSize(5.0f);//设置点大小
+    glLineWidth(2.0f);//设置线条宽度，加粗网格
     glDrawArrays(GL_LINES, 0, vertexCount / 3);
     glBindVertexArray(0);
 }
@@ -1302,7 +1363,7 @@ std::vector<float> UpdateGridVertices(std::vector<float> vertices, const std::ve
             float rs = (2*G*obj.mass)/(c*c);//史瓦西半径
 
             float dz = 2 * sqrt(rs * (distance_m - rs));//弯曲公式
-            totalDisplacement.y += dz * 2.0f;
+            totalDisplacement.y += dz * 2.0f; // 增加系数使形变更明显
         }
         vertices[i+1] = totalDisplacement.y + -abs(verticalShift);
     }

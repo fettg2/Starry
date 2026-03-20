@@ -1,0 +1,11 @@
+prefix=C:/Program Files (x86)/Hand
+exec_prefix=C:/Program Files (x86)/Hand/
+libdir=C:/Program Files (x86)/Hand/lib
+includedir=C:/Program Files (x86)/Hand/../include/include
+
+Name: Hand
+Description: Import various well-known 3D model formats in an uniform manner.
+Version: 5.0.0
+Libs: -L${libdir} -lassimp
+Libs.private: -lstdc++ -lz
+Cflags: -I${includedir}

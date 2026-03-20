@@ -134,7 +134,7 @@ public:
             }
             
             // 计算碰撞后的速度变化（完全弹性碰撞）
-            float restitution = 0.8f; //  restitution系数
+            float restitution = 0.3f; //  restitution系数，减小以降低碰撞返回速度
             float impulseScalar = -(1 + restitution) * velocityAlongNormal;
             impulseScalar /= (1/this->mass + 1/other.mass);
             

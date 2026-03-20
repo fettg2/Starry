@@ -4,6 +4,7 @@ add_executable(${pro}
         gravity_sim.cpp
         Octree.cpp
         Scene.cpp
+        GameMode.cpp
         )
 
 # 主程序依赖的库基本覆盖三类职责：

@@ -1,0 +1,19 @@
+{
+	"InstallScripts" : 
+	[
+		"C:/Users/fettg/Desktop/Starry/Starry-main/build/cmake_install.cmake",
+		"C:/Users/fettg/Desktop/Starry/Starry-main/build/src/cmake_install.cmake",
+		"C:/Users/fettg/Desktop/Starry/Starry-main/build/third_party/cmake_install.cmake",
+		"C:/Users/fettg/Desktop/Starry/Starry-main/build/third_party/assimp/cmake_install.cmake",
+		"C:/Users/fettg/Desktop/Starry/Starry-main/build/third_party/assimp/contrib/cmake_install.cmake",
+		"C:/Users/fettg/Desktop/Starry/Starry-main/build/third_party/assimp/contrib/irrXML/cmake_install.cmake",
+		"C:/Users/fettg/Desktop/Starry/Starry-main/build/third_party/assimp/code/cmake_install.cmake",
+		"C:/Users/fettg/Desktop/Starry/Starry-main/build/third_party/glm/cmake_install.cmake",
+		"C:/Users/fettg/Desktop/Starry/Starry-main/build/third_party/glm/glm/cmake_install.cmake",
+		"C:/Users/fettg/Desktop/Starry/Starry-main/build/third_party/stb/cmake_install.cmake",
+		"C:/Users/fettg/Desktop/Starry/Starry-main/build/third_party/glfw/cmake_install.cmake",
+		"C:/Users/fettg/Desktop/Starry/Starry-main/build/third_party/glfw/src/cmake_install.cmake",
+		"C:/Users/fettg/Desktop/Starry/Starry-main/build/third_party/tinyobjloader/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
