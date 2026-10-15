@@ -1,0 +1,17 @@
+# 构建产物（不要提交，本机路径写进去以后换机器就废）
+/build/
+
+# clangd / IntelliSense 缓存
+/.cache/
+
+# 编译产物
+*.exe
+*.o
+*.obj
+*.pdb
+*.dll
+
+# 编辑器杂项
+*.log
+Thumbs.db
+.DS_Store
